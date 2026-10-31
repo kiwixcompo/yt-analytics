@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'VidPulse Studio',
-  description: 'YouTube intelligence and content planning platform',
+  title: 'VidPulse Studio | YouTube Analytics & Content Production',
+  description: 'AI-powered YouTube intelligence, keyword research, and viral content production suite',
+  icons: {
+    icon: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' }
+    ],
+    apple: '/logo.svg',
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

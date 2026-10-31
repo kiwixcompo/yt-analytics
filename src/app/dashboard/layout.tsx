@@ -64,9 +64,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-slate-800">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-600 to-indigo-600 flex items-center justify-center shrink-0">
-          <Zap className="w-4.5 h-4.5 text-white" />
-        </div>
+        <img
+          src="/logo.svg"
+          alt="VidPulse Studio Logo"
+          className="w-8 h-8 rounded-xl shrink-0 shadow-md shadow-rose-600/20"
+        />
         <span className="font-bold text-sm text-white tracking-tight">VidPulse Studio</span>
       </div>
 

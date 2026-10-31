@@ -10,9 +10,11 @@ export default async function Home() {
       {/* Top Navigation */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20">
-            <PlaySquare className="w-6 h-6 text-white" />
-          </div>
+          <img
+            src="/logo.svg"
+            alt="VidPulse Logo"
+            className="w-10 h-10 rounded-xl shadow-lg shadow-rose-500/25 shrink-0"
+          />
           <div>
             <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-rose-400 via-purple-300 to-indigo-400">
               VidPulse
