@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const oauth2Client = getOAuth2Client();
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const oauth2Client = getOAuth2Client(host);
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 

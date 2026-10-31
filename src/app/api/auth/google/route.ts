@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getOAuth2Client, YOUTUBE_SCOPES } from '@/lib/google-oauth';
 
-export async function GET() {
-  const oauth2Client = getOAuth2Client();
+export async function GET(request: NextRequest) {
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  const oauth2Client = getOAuth2Client(host);
 
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     return NextResponse.json(
