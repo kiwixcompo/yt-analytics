@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidPulse Intelligence</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --card-bg: #0f172a;
+      --card-hover: #1e293b;
+      --border: #1e293b;
+      --border-accent: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --rose: #f43f5e;
+      --rose-glow: rgba(244, 63, 94, 0.15);
+      --indigo: #6366f1;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      width: 360px;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      max-height: 580px;
+      overflow-y: auto;
+    }
+
+    body::-webkit-scrollbar {
+      width: 5px;
+    }
+    body::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, var(--rose), var(--indigo));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(244, 63, 94, 0.3);
+    }
+
+    .logo-text {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      background: linear-gradient(to right, #fda4af, #e0e7ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.inactive {
+      background: rgba(148, 163, 184, 0.12);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Live Intel Card */
+    .intel-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .intel-section::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--rose), var(--indigo));
+    }
+
+    .intel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .intel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .intel-count-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--rose-glow);
+      color: #fb7185;
+      border: 1px solid rgba(244, 63, 94, 0.25);
+    }
+
+    /* Top Outlier Showcase */
+    .outlier-card {
+      background: #020617;
+      border: 1px solid rgba(244, 63, 94, 0.25);
+      border-radius: 9px;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .outlier-card:hover {
+      border-color: rgba(244, 63, 94, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15);
+    }
+
+    .outlier-thumb {
+      width: 72px;
+      height: 44px;
+      border-radius: 5px;
+      object-cover: cover;
+      background: #1e293b;
+      shrink: 0;
+    }
+
+    .outlier-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .outlier-title {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+      color: #f1f5f9;
+    }
+
+    .outlier-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .ratio-pill {
+      font-size: 10px;
+      font-weight: 800;
+      color: #f43f5e;
+      background: rgba(244, 63, 94, 0.12);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .no-outliers-box {
+      text-align: center;
+      padding: 14px 10px;
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    /* Quick Shortcuts Grid */
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .shortcut-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: #e2e8f0;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .shortcut-btn:hover {
+      background: var(--card-hover);
+      border-color: var(--border-accent);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .shortcut-btn.primary {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #e11d48, #4f46e5);
+      border: none;
+      color: white;
+      padding: 10px;
+      box-shadow: 0 2px 10px rgba(225, 29, 72, 0.25);
+    }
+
+    .shortcut-btn.primary:hover {
+      background: linear-gradient(135deg, #be123c, #4338ca);
+      box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4);
+    }
+
+    /* Accordion Settings */
+    .settings-accordion {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .settings-toggle-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .settings-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .settings-chevron {
+      transition: transform 0.2s ease;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .settings-accordion.open .settings-chevron {
+      transform: rotate(180deg);
+    }
+
+    .settings-content {
+      display: none;
+      padding: 0 12px 12px 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .settings-accordion.open .settings-content {
+      display: flex;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+
+    .control-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .control-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Switches */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #334155;
+      transition: .2s;
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--rose);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(14px);
+    }
+
+    .select-input {
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">VidPulse Studio</span>
+    </div>
+    <div id="status-badge" class="status-badge inactive">
+      <span class="status-dot"></span>
+      <span id="status-text">Standby</span>
+    </div>
+  </div>
+
+  <!-- Live Intel Card -->
+  <div class="intel-section">
+    <div class="intel-header">
+      <div class="intel-title">
+        <span>🎯 Page Outliers</span>
+      </div>
+      <div id="intel-count" class="intel-count-pill">0 Detected</div>
+    </div>
+
+    <!-- Active Outlier Item (Rendered via JS) -->
+    <div id="outliers-container">
+      <div class="no-outliers-box" id="no-outliers-msg">
+        Open YouTube search results or homepage to scan for viral small creators.
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick App Navigation Shortcuts -->
+  <div class="shortcuts-grid">
+    <a href="http://localhost:3000/dashboard" target="_blank" class="shortcut-btn primary">
+      🚀 Open VidPulse Studio &rarr;
+    </a>
+    <a href="http://localhost:3000/dashboard/research" target="_blank" class="shortcut-btn">
+      🔍 Keyword Explorer
+    </a>
+    <a href="http://localhost:3000/dashboard/vault" target="_blank" class="shortcut-btn">
+      📌 Keyword Vault
+    </a>
+  </div>
+
+  <!-- Settings Collapsible Accordion -->
+  <div class="settings-accordion" id="settings-accordion">
+    <button type="button" class="settings-toggle-btn" id="settings-toggle-btn">
+      <span>⚙️ Overlay &amp; Detection Settings</span>
+      <span class="settings-chevron">▼</span>
+    </button>
+    <div class="settings-content">
+      <div class="control-row">
+        <div>
+          <div class="control-label">Enable Overlay Badges</div>
+          <div class="control-desc">Calculate view-to-sub ratios on page</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-enabled" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="control-row">
+        <div>
+          <div class="control-label">Focus Outliers Only</div>
+          <div class="control-desc">Dim regular videos exceeding quota</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-outliers">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="control-row">
+        <div>
+          <div class="control-label">Subscriber Range</div>
+          <div class="control-desc">Target channel subscriber threshold</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <select id="select-min-subs" class="select-input">
+            <option value="0" selected>0</option>
+            <option value="500">500</option>
+            <option value="1000">1k</option>
+            <option value="5000">5k</option>
+            <option value="10000">10k</option>
+          </select>
+          <span style="font-size:10px; color:#94a3b8;">to</span>
+          <select id="select-max-subs" class="select-input">
+            <option value="5000">5k</option>
+            <option value="10000">10k</option>
+            <option value="20000" selected>20k</option>
+            <option value="50000">50k</option>
+            <option value="100000">100k</option>
+            <option value="250000">250k</option>
+            <option value="500000">500k</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <div>
+          <div class="control-label">Search Autocomplete Outliers</div>
+          <div class="control-desc">Live outlier drawer when typing in YouTube search</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-autocomplete" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    VidPulse Zero-Bloat Engine &bull; Memory optimized
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

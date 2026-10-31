@@ -1,0 +1,405 @@
+/* VidPulse Ultra-Lightweight UI Styles (<12KB total footprint) */
+
+.vidpulse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  margin-right: 6px;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  cursor: default;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  z-index: 10;
+}
+
+.vidpulse-badge:hover {
+  transform: translateY(-1px);
+}
+
+/* Outlier Badge: High Energy Neon Amber/Orange */
+.vidpulse-badge-outlier {
+  background: linear-gradient(135deg, #ea580c, #b45309);
+  color: #ffffff;
+  border: 1px solid rgba(251, 146, 60, 0.4);
+}
+
+/* Normal Ratio Badge: Subtle Dark/Slate */
+.vidpulse-badge-normal {
+  background: rgba(30, 41, 59, 0.85);
+  color: #94a3b8;
+  border: 1px solid rgba(71, 85, 105, 0.4);
+}
+
+/* Emulate Action Button */
+.vidpulse-emulate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  transition: all 0.15s ease;
+  text-decoration: none;
+  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3);
+}
+
+.vidpulse-emulate-btn:hover {
+  background: linear-gradient(135deg, #4338ca, #4f46e5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.45);
+}
+
+/* Dim non-outlier items when outlier filter is active */
+.vidpulse-dimmed-video {
+  opacity: 0.22 !important;
+  filter: grayscale(85%) !important;
+  transition: opacity 0.2s ease;
+}
+
+.vidpulse-dimmed-video:hover {
+  opacity: 0.85 !important;
+  filter: grayscale(0%) !important;
+}
+
+/* Emulation Blueprint Modal */
+.vidpulse-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 9999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: vidpulse-fade 0.15s ease-out;
+}
+
+.vidpulse-modal-card {
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  max-width: 540px;
+  width: 100%;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.vidpulse-modal-header {
+  padding: 16px 20px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vidpulse-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fb923c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vidpulse-modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.vidpulse-modal-close:hover {
+  color: #ffffff;
+}
+
+.vidpulse-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vidpulse-section-box {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #334155;
+}
+
+.vidpulse-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.vidpulse-section-content {
+  font-size: 13px;
+  color: #e2e8f0;
+  line-height: 1.45;
+}
+
+.vidpulse-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.vidpulse-app-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #4f46e5;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.vidpulse-app-link-btn:hover {
+  background: #4338ca;
+}
+
+@keyframes vidpulse-fade {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================================
+   VidPulse Live Autocomplete Outlier Drawer
+   ============================================================ */
+
+.vidpulse-ac-drawer {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  min-width: 580px;
+  max-width: 720px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(99, 102, 241, 0.25);
+  z-index: 2147483647 !important; /* Topmost layer in Chrome DOM */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  animation: vidpulse-fade 0.15s ease-out;
+}
+
+.vidpulse-ac-select {
+  background: #1f2937 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #475569 !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  position: relative !important;
+  z-index: 2147483647 !important;
+}
+
+.vidpulse-ac-select option {
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  padding: 4px 8px !important;
+}
+
+.vidpulse-ac-header {
+  padding: 10px 14px;
+  background: #111827;
+  border-bottom: 1px solid #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vidpulse-ac-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vidpulse-ac-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(249, 115, 22, 0.18);
+  color: #fb923c;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.vidpulse-ac-status {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.vidpulse-ac-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vidpulse-ac-export-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.vidpulse-ac-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.vidpulse-ac-list {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vidpulse-ac-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  border: 1px solid rgba(51, 65, 85, 0.4);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.vidpulse-ac-item:hover {
+  background: #1e293b;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.vidpulse-ac-thumb {
+  width: 76px;
+  height: 44px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #1e293b;
+}
+
+.vidpulse-ac-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.vidpulse-ac-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vidpulse-ac-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+.vidpulse-ac-item-views {
+  color: #fb923c;
+  font-weight: 700;
+}
+
+.vidpulse-ac-item-subs {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.vidpulse-ac-item-ratio {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.vidpulse-ac-empty {
+  padding: 24px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.vidpulse-ac-footer {
+  padding: 8px 14px;
+  background: #0b0f19;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.vidpulse-ac-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.vidpulse-ac-close-btn:hover {
+  color: #ffffff;
+}
+
