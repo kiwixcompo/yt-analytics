@@ -555,8 +555,8 @@ function ResearchContent() {
           </form>
 
           {/* Query Types & Controls */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
-            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-semibold">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-semibold overflow-x-auto no-scrollbar max-w-full">
               {/* YouTube Video Previews & Outlier Mode Button */}
               <button
                 type="button"
@@ -564,14 +564,14 @@ function ResearchContent() {
                   setType('serp');
                   fetchLiveSerp(query, serpOutliersOnly);
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   type === 'serp'
                     ? 'bg-rose-600 text-white font-bold shadow-sm'
                     : 'text-rose-400 hover:text-white'
                 }`}
               >
                 <Video className="w-3.5 h-3.5" />
-                <span>🎬 YouTube Video Previews &amp; Outliers</span>
+                <span>🎬 Video Previews &amp; Outliers</span>
               </button>
 
               {/* Autocomplete Mode Button */}
@@ -581,14 +581,14 @@ function ResearchContent() {
                   setType('autocomplete');
                   fetchYouTubeAutocomplete(query, isDeepScout);
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   type === 'autocomplete'
                     ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <Flame className="w-3.5 h-3.5 fill-current" />
-                <span>⚡ YouTube Autocomplete (Live)</span>
+                <span>⚡ Autocomplete (Live)</span>
               </button>
 
               <button
@@ -597,11 +597,11 @@ function ResearchContent() {
                   setType('related');
                   fetchFullResearch(query, 'related');
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   type === 'related' ? 'bg-indigo-600 text-white font-bold shadow-sm' : 'text-slate-300 hover:text-white'
                 }`}
               >
-                <span>🔍 Search Volume &amp; Competition</span>
+                <span>🔍 Volume &amp; Competition</span>
               </button>
 
               <button
@@ -610,11 +610,11 @@ function ResearchContent() {
                   setType('matching');
                   fetchFullResearch(query, 'matching');
                 }}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                className={`shrink-0 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   type === 'matching' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                🔍 Matching Terms
+                Matching
               </button>
 
               <button
@@ -623,11 +623,11 @@ function ResearchContent() {
                   setType('questions');
                   fetchFullResearch(query, 'questions');
                 }}
-                className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                className={`shrink-0 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                   type === 'questions' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                ❓ Questions (High CTR)
+                ❓ Questions
               </button>
             </div>
 
@@ -1355,18 +1355,18 @@ function ResearchContent() {
 
       {/* Floating Bottom Action Bar for Checkbox Selection */}
       {selectedKeywords.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-2xl rounded-2xl px-5 py-3 flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-2 pr-3 border-r border-slate-700">
+        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-2xl rounded-2xl px-3 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2 sm:gap-4 text-xs w-[94%] sm:w-auto max-w-xl">
+          <div className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-slate-700">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            <span className="font-bold text-white text-sm">
-              {selectedKeywords.size} Keyword{selectedKeywords.size > 1 ? 's' : ''} Selected
+            <span className="font-bold text-white text-xs sm:text-sm">
+              {selectedKeywords.size} Selected
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={handleOpenVaultModal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition active:scale-95 cursor-pointer"
             >
               <Bookmark className="w-3.5 h-3.5 fill-current" />
               <span>Save to Vault &rarr;</span>
@@ -1374,17 +1374,10 @@ function ResearchContent() {
 
             <button
               onClick={() => handleExportCSV(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition cursor-pointer"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Export Selected</span>
-            </button>
-
-            <button
-              onClick={handleSelectAllResults}
-              className="px-2.5 py-2 text-slate-400 hover:text-slate-200 font-semibold transition cursor-pointer"
-            >
-              Select All {type === 'autocomplete' ? autocompleteResults.length : 100}
+              <span>Export</span>
             </button>
 
             <button

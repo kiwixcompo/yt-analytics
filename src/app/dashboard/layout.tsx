@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import MobileBottomNav from './components/mobile-bottom-nav';
 import {
   LayoutDashboard,
   Search,
@@ -202,9 +203,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950">
+        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950 pb-20 md:pb-0">
           {children}
         </main>
+
+        {/* ── Mobile Bottom Navigation Bar ── */}
+        <MobileBottomNav />
       </div>
     </div>
   );

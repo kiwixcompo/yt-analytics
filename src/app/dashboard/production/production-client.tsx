@@ -414,43 +414,45 @@ export default function RecordingQueueClient() {
                   </div>
 
                   {/* Header Actions */}
-                  <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                    <button
-                      type="button"
-                      onClick={() => handleExportTxt(item)}
-                      className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition cursor-pointer"
-                      title="Download Full Production Sheet (.txt)"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0 self-stretch sm:self-center justify-between sm:justify-end">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleExportTxt(item)}
+                        className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition cursor-pointer"
+                        title="Download Full Production Sheet (.txt)"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
 
-                    <Link
-                      href={`/dashboard/studio?topic=${encodeURIComponent(item.topic)}`}
-                      className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
-                      title="Edit in Content Studio"
-                    >
-                      <Sparkles className="w-4 h-4 text-rose-400" />
-                    </Link>
+                      <Link
+                        href={`/dashboard/studio?topic=${encodeURIComponent(item.topic)}`}
+                        className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition"
+                        title="Edit in Content Studio"
+                      >
+                        <Sparkles className="w-4 h-4 text-rose-400" />
+                      </Link>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm(`Delete "${item.title}" from recording queue?`)) {
-                          deleteProductionItem(item.id);
-                        }
-                      }}
-                      className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-rose-400 border border-slate-800 transition cursor-pointer"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Delete "${item.title}" from recording queue?`)) {
+                            deleteProductionItem(item.id);
+                          }
+                        }}
+                        className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-rose-400 border border-slate-800 transition cursor-pointer"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
-                      className="flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
                     >
-                      <span>{isExpanded ? 'Collapse' : 'Open Production Sheet'}</span>
+                      <span>{isExpanded ? 'Collapse' : 'Open Sheet'}</span>
                       {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
                   </div>
@@ -458,29 +460,29 @@ export default function RecordingQueueClient() {
 
                 {/* Expanded Production Sheet View */}
                 {isExpanded && (
-                  <div className="border-t border-slate-800/80 p-5 space-y-6 bg-slate-950/80">
+                  <div className="border-t border-slate-800/80 p-3 sm:p-5 space-y-6 bg-slate-950/80">
                     {/* View Switcher Tabs */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
-                      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                      <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold overflow-x-auto no-scrollbar max-w-full">
                         <button
                           onClick={() =>
                             setActiveTabByItem((prev) => ({ ...prev, [item.id]: 'teleprompter' }))
                           }
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                             activeTab === 'teleprompter'
                               ? 'bg-indigo-600 text-white shadow-sm'
                               : 'text-slate-400 hover:text-white'
                           }`}
                         >
                           <BookOpen className="w-3.5 h-3.5" />
-                          <span>Teleprompter Script</span>
+                          <span>Teleprompter</span>
                         </button>
 
                         <button
                           onClick={() =>
                             setActiveTabByItem((prev) => ({ ...prev, [item.id]: 'script' }))
                           }
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                             activeTab === 'script'
                               ? 'bg-indigo-600 text-white shadow-sm'
                               : 'text-slate-400 hover:text-white'
@@ -494,35 +496,35 @@ export default function RecordingQueueClient() {
                           onClick={() =>
                             setActiveTabByItem((prev) => ({ ...prev, [item.id]: 'metadata' }))
                           }
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                             activeTab === 'metadata'
                               ? 'bg-indigo-600 text-white shadow-sm'
                               : 'text-slate-400 hover:text-white'
                           }`}
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          <span>Description &amp; Tags</span>
+                          <span>SEO &amp; Tags</span>
                         </button>
 
                         <button
                           onClick={() =>
                             setActiveTabByItem((prev) => ({ ...prev, [item.id]: 'thumbnail' }))
                           }
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
                             activeTab === 'thumbnail'
                               ? 'bg-indigo-600 text-white shadow-sm'
                               : 'text-slate-400 hover:text-white'
                           }`}
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>Thumbnail Concept</span>
+                          <span>Thumbnail</span>
                         </button>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleToggleStatus(item)}
-                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${
+                          className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${
                             item.status === 'recorded'
                               ? 'bg-slate-800 hover:bg-slate-700 text-slate-300'
                               : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'

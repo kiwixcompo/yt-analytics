@@ -503,26 +503,26 @@ ${metadataResult.seoDescription.callToAction}`
             <div className="space-y-8 animate-in fade-in duration-300">
               {/* Active Provider Banner */}
               {metadataResult.activeProvider && (
-                <div className="flex items-center justify-between px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 sm:px-4 sm:py-2 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     <span>Generated via: <strong className="text-slate-200">{metadataResult.activeProvider}</strong></span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleSaveBackToVault}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20 font-bold text-xs transition cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20 font-bold text-xs transition cursor-pointer"
                     >
                       <Film className="w-3.5 h-3.5" />
-                      <span>📌 Save to Recording Queue (Ready to Film)</span>
+                      <span>📌 Save to Recording Queue</span>
                     </button>
                     {vaultId && (
                       <button
                         onClick={handleSaveBackToVault}
-                        className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-bold cursor-pointer"
+                        className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-bold cursor-pointer text-xs"
                       >
                         <Bookmark className="w-3.5 h-3.5" />
-                        <span>Update Keyword Vault</span>
+                        <span>Update Vault</span>
                       </button>
                     )}
                   </div>
