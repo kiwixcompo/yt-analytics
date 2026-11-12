@@ -35,18 +35,8 @@ const navItems: NavItem[] = [
   { href: '/dashboard/studio', label: 'Content Studio', icon: Clapperboard },
   { href: '/dashboard/production', label: 'Recording Queue', icon: Film, badge: 'Ready' },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
-  {
-    href: '/dashboard#section-google-trends',
-    label: 'Trend Scout',
-    icon: Compass,
-    isAnchor: true,
-  },
-  {
-    href: '/dashboard#section-competitor-radar',
-    label: 'Competitor Radar',
-    icon: Radar,
-    isAnchor: true,
-  },
+  { href: '/dashboard/trends', label: 'Trend Scout', icon: Compass },
+  { href: '/dashboard/competitors', label: 'Competitor Radar', icon: Radar },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

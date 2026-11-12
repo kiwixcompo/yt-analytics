@@ -35,6 +35,7 @@ import {
   addCollection,
   DEFAULT_COLLECTION,
 } from '@/lib/vault-service';
+import OutlierExplorerModal, { SUBSCRIBER_RANGES } from '../components/outlier-explorer-modal';
 
 interface KeywordMetric {
   keyword: string;
@@ -110,6 +111,9 @@ function ResearchContent() {
   const [serpAnalysis, setSerpAnalysis] = useState<SerpAnalysis | null>(null);
   const [isLoadingSerp, setIsLoadingSerp] = useState(false);
   const [serpOutliersOnly, setSerpOutliersOnly] = useState(false);
+  const [serpSubRange, setSerpSubRange] = useState<string>('all');
+  const [selectedExplorerVideo, setSelectedExplorerVideo] = useState<SerpVideo | null>(null);
+  const [isExplorerModalOpen, setIsExplorerModalOpen] = useState(false);
 
   // Emulation Blueprint Modal States
   const [activeEmulationVideo, setActiveEmulationVideo] = useState<any>(null);
@@ -141,14 +145,22 @@ function ResearchContent() {
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [saveToast, setSaveToast] = useState<{ show: boolean; msg: string }>({ show: false, msg: '' });
 
-  // Fetch Live YouTube SERP Videos (Thumbnails, Outliers, Ratios)
-  const fetchLiveSerp = async (searchTarget: string, outliersOnly: boolean = false) => {
+  // Fetch Live YouTube SERP Videos (Thumbnails, Outliers, Ratios, Subscriber Ranges)
+  const fetchLiveSerp = async (
+    searchTarget: string,
+    outliersOnly: boolean = false,
+    subRangeChoice: string = serpSubRange
+  ) => {
     if (!searchTarget.trim()) return;
     setIsLoadingSerp(true);
     try {
-      const url = `/api/youtube/search?q=${encodeURIComponent(searchTarget.trim())}${
-        outliersOnly ? '&outliers=true&maxSubs=20000' : ''
-      }`;
+      let url = `/api/youtube/search?q=${encodeURIComponent(searchTarget.trim())}`;
+      if (outliersOnly) {
+        url += '&outliers=true';
+      }
+      if (subRangeChoice && subRangeChoice !== 'all') {
+        url += `&subRange=${subRangeChoice}`;
+      }
       const res = await fetch(url);
       const data = await res.json();
       setSerpVideos(data.videos || []);
@@ -633,36 +645,58 @@ function ResearchContent() {
 
             {/* Sub-Filters based on active view */}
             {type === 'serp' ? (
-              <div className="flex items-center gap-1 p-0.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSerpOutliersOnly(false);
-                    fetchLiveSerp(query, false);
-                  }}
-                  className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                    !serpOutliersOnly
-                      ? 'bg-slate-800 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  All Page 1 Videos ({serpVideos.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSerpOutliersOnly(true);
-                    fetchLiveSerp(query, true);
-                  }}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
-                    serpOutliersOnly
-                      ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-sm'
-                      : 'text-rose-400 hover:text-rose-300'
-                  }`}
-                >
-                  <Flame className="w-3.5 h-3.5 fill-current" />
-                  <span>Outliers Only (&lt; 20k Subs)</span>
-                </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 p-0.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSerpOutliersOnly(false);
+                      fetchLiveSerp(query, false, serpSubRange);
+                    }}
+                    className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                      !serpOutliersOnly
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    All Page 1 Videos ({serpVideos.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSerpOutliersOnly(true);
+                      fetchLiveSerp(query, true, serpSubRange);
+                    }}
+                    className={`flex items-center gap-1 px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                      serpOutliersOnly
+                        ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-sm'
+                        : 'text-rose-400 hover:text-rose-300'
+                    }`}
+                  >
+                    <Flame className="w-3.5 h-3.5 fill-current" />
+                    <span>Outliers Only</span>
+                  </button>
+                </div>
+
+                {/* Sub Range Filter Dropdown */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-xl text-xs">
+                  <span className="text-slate-400 font-medium">Subscribers:</span>
+                  <select
+                    value={serpSubRange}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setSerpSubRange(next);
+                      fetchLiveSerp(query, serpOutliersOnly, next);
+                    }}
+                    className="bg-transparent text-indigo-300 font-semibold focus:outline-none cursor-pointer"
+                  >
+                    {SUBSCRIBER_RANGES.map((r) => (
+                      <option key={r.value} value={r.value} className="bg-slate-900 text-slate-200">
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             ) : type === 'autocomplete' ? (
               <div className="flex items-center gap-2">
@@ -882,14 +916,27 @@ function ResearchContent() {
                               </p>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEmulation(video)}
-                              className="shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-rose-600/30 transition active:scale-95 cursor-pointer"
-                            >
-                              <Rocket className="w-3.5 h-3.5" />
-                              <span>Emulate Blueprint &rarr;</span>
-                            </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedExplorerVideo(video);
+                                  setIsExplorerModalOpen(true);
+                                }}
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white font-bold text-xs border border-indigo-500/30 transition active:scale-95 cursor-pointer"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                                <span>Explore Similar Outliers</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEmulation(video)}
+                                className="shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-rose-600/30 transition active:scale-95 cursor-pointer"
+                              >
+                                <Rocket className="w-3.5 h-3.5" />
+                                <span>Emulate Blueprint &rarr;</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1580,6 +1627,14 @@ function ResearchContent() {
           </div>
         </div>
       )}
+
+      {/* Outlier Video Explorer Modal */}
+      <OutlierExplorerModal
+        video={selectedExplorerVideo}
+        isOpen={isExplorerModalOpen}
+        onClose={() => setIsExplorerModalOpen(false)}
+        onOpenEmulation={handleOpenEmulation}
+      />
 
       {/* Save Success Toast */}
       {saveToast.show && (

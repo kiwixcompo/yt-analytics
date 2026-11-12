@@ -186,8 +186,38 @@ export async function GET(request: NextRequest) {
 
     // Process videos with subscriber counts in parallel
     // If outlierOnly is requested, inspect up to 25 raw items to find qualifying hidden gems
+    // Subscriber filter parameters:
+    // Support either maxSubs or range: minSubs and maxSubs
+    const minSubsParam = parseInt(request.nextUrl.searchParams.get('minSubs') || '0', 10);
+    const maxSubsParam = parseInt(request.nextUrl.searchParams.get('maxSubs') || '100000000', 10);
     const filterOutliers = request.nextUrl.searchParams.get('outliers') === 'true';
-    const maxSubsParam = parseInt(request.nextUrl.searchParams.get('maxSubs') || '20000', 10);
+    const subRange = request.nextUrl.searchParams.get('subRange') || ''; // e.g. "0-1k", "1k-5k", "5k-10k", "10k-20k", "20k-50k", "under-100k"
+
+    // Derive effective min & max from range token if supplied
+    let effectiveMinSubs = minSubsParam;
+    let effectiveMaxSubs = maxSubsParam;
+
+    if (subRange === '0-1k') {
+      effectiveMinSubs = 0;
+      effectiveMaxSubs = 1000;
+    } else if (subRange === '1k-5k') {
+      effectiveMinSubs = 1001;
+      effectiveMaxSubs = 5000;
+    } else if (subRange === '5k-10k') {
+      effectiveMinSubs = 5001;
+      effectiveMaxSubs = 10000;
+    } else if (subRange === '10k-20k') {
+      effectiveMinSubs = 10001;
+      effectiveMaxSubs = 20000;
+    } else if (subRange === '20k-50k') {
+      effectiveMinSubs = 20001;
+      effectiveMaxSubs = 50000;
+    } else if (subRange === 'under-100k' || subRange === '50k-100k') {
+      effectiveMinSubs = subRange === '50k-100k' ? 50001 : 0;
+      effectiveMaxSubs = 100000;
+    } else if (filterOutliers && !request.nextUrl.searchParams.has('maxSubs')) {
+      effectiveMaxSubs = 50000; // default cap for outliers if not specified
+    }
     const targetSlice = filterOutliers ? rawVideos.slice(0, 25) : rawVideos.slice(0, 15);
 
     const uniqueChannelIds = Array.from(
@@ -208,18 +238,17 @@ export async function GET(request: NextRequest) {
       const channelSubscriberCountText = subInfo?.countText || 'Hidden';
       const channelSubscriberCount = subInfo?.count || 0;
 
+      let ratio = 0;
+      let isOutlierHit = false;
+
       // Ratio: viewsCount / channelSubscriberCount
       // Outlier criteria:
       // High view-to-sub ratio (>1.5x) or strong performance for channels under 20k subscribers
-      const minSubsParam = parseInt(request.nextUrl.searchParams.get('minSubs') || '0', 10);
-      let isOutlierHit = false;
-      let ratio = 0;
-
       if (channelSubscriberCount > 0) {
         ratio = Math.round((v.viewsCount / channelSubscriberCount) * 10) / 10;
         if (
-          channelSubscriberCount >= minSubsParam &&
-          channelSubscriberCount <= maxSubsParam &&
+          channelSubscriberCount >= effectiveMinSubs &&
+          channelSubscriberCount <= effectiveMaxSubs &&
           v.viewsCount > channelSubscriberCount &&
           ratio >= 1.2
         ) {
@@ -246,12 +275,19 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // If outlierOnly was requested, strictly filter to outlier hits with <= maxSubs (default 20,000)
+    // If outlierOnly or subRange was requested, strictly filter by outlier status and sub range
     const videos = filterOutliers
       ? mappedVideos.filter(
           (v) =>
             v.isOutlierHit &&
-            ((v.channelSubscriberCount || 0) <= maxSubsParam)
+            (v.channelSubscriberCount || 0) >= effectiveMinSubs &&
+            (v.channelSubscriberCount || 0) <= effectiveMaxSubs
+        )
+      : subRange
+      ? mappedVideos.filter(
+          (v) =>
+            (v.channelSubscriberCount || 0) >= effectiveMinSubs &&
+            (v.channelSubscriberCount || 0) <= effectiveMaxSubs
         )
       : mappedVideos;
 
