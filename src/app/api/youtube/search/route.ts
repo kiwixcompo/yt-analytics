@@ -192,6 +192,7 @@ export async function GET(request: NextRequest) {
     const maxSubsParam = parseInt(request.nextUrl.searchParams.get('maxSubs') || '100000000', 10);
     const filterOutliers = request.nextUrl.searchParams.get('outliers') === 'true';
     const subRange = request.nextUrl.searchParams.get('subRange') || ''; // e.g. "0-1k", "1k-5k", "5k-10k", "10k-20k", "20k-50k", "under-100k"
+    const uploadDate = request.nextUrl.searchParams.get('uploadDate') || 'all'; // "all" | "today" | "this_week" | "this_month" | "this_year"
 
     // Derive effective min & max from range token if supplied
     let effectiveMinSubs = minSubsParam;
@@ -275,8 +276,8 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // If outlierOnly or subRange was requested, strictly filter by outlier status and sub range
-    const videos = filterOutliers
+    // If outlierOnly, subRange, or uploadDate was requested, filter accordingly
+    let videos = filterOutliers
       ? mappedVideos.filter(
           (v) =>
             v.isOutlierHit &&
@@ -290,6 +291,34 @@ export async function GET(request: NextRequest) {
             (v.channelSubscriberCount || 0) <= effectiveMaxSubs
         )
       : mappedVideos;
+
+    // Filter by upload date recency if requested
+    if (uploadDate && uploadDate !== 'all') {
+      videos = videos.filter((v) => {
+        const pt = (v.publishedTime || '').toLowerCase();
+        if (uploadDate === 'today') {
+          return pt.includes('minute') || pt.includes('hour') || pt.includes('second');
+        } else if (uploadDate === 'this_week') {
+          return (
+            pt.includes('minute') ||
+            pt.includes('hour') ||
+            pt.includes('day') ||
+            pt.includes('yesterday')
+          );
+        } else if (uploadDate === 'this_month') {
+          return (
+            pt.includes('minute') ||
+            pt.includes('hour') ||
+            pt.includes('day') ||
+            pt.includes('yesterday') ||
+            pt.includes('week')
+          );
+        } else if (uploadDate === 'this_year') {
+          return !pt.includes('year');
+        }
+        return true;
+      });
+    }
 
     // Graphical Representation Analysis
     let analysis: SerpAnalysis | null = null;

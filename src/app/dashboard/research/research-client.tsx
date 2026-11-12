@@ -28,6 +28,7 @@ import {
   Video,
   Play,
   Users,
+  Calendar,
 } from 'lucide-react';
 import {
   saveKeywordsToVault,
@@ -112,6 +113,7 @@ function ResearchContent() {
   const [isLoadingSerp, setIsLoadingSerp] = useState(false);
   const [serpOutliersOnly, setSerpOutliersOnly] = useState(false);
   const [serpSubRange, setSerpSubRange] = useState<string>('all');
+  const [serpUploadDate, setSerpUploadDate] = useState<string>('all');
   const [selectedExplorerVideo, setSelectedExplorerVideo] = useState<SerpVideo | null>(null);
   const [isExplorerModalOpen, setIsExplorerModalOpen] = useState(false);
 
@@ -145,11 +147,12 @@ function ResearchContent() {
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [saveToast, setSaveToast] = useState<{ show: boolean; msg: string }>({ show: false, msg: '' });
 
-  // Fetch Live YouTube SERP Videos (Thumbnails, Outliers, Ratios, Subscriber Ranges)
+  // Fetch Live YouTube SERP Videos (Thumbnails, Outliers, Ratios, Subscriber Ranges, Upload Date)
   const fetchLiveSerp = async (
     searchTarget: string,
     outliersOnly: boolean = false,
-    subRangeChoice: string = serpSubRange
+    subRangeChoice: string = serpSubRange,
+    uploadDateChoice: string = serpUploadDate
   ) => {
     if (!searchTarget.trim()) return;
     setIsLoadingSerp(true);
@@ -160,6 +163,9 @@ function ResearchContent() {
       }
       if (subRangeChoice && subRangeChoice !== 'all') {
         url += `&subRange=${subRangeChoice}`;
+      }
+      if (uploadDateChoice && uploadDateChoice !== 'all') {
+        url += `&uploadDate=${uploadDateChoice}`;
       }
       const res = await fetch(url);
       const data = await res.json();
@@ -547,10 +553,33 @@ function ResearchContent() {
               />
             </div>
 
+            {/* Upload Date Filter */}
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs shrink-0">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-slate-400 font-medium">Uploaded:</span>
+              <select
+                value={serpUploadDate}
+                onChange={(e) => {
+                  const nextDate = e.target.value;
+                  setSerpUploadDate(nextDate);
+                  if (type === 'serp') {
+                    fetchLiveSerp(query, serpOutliersOnly, serpSubRange, nextDate);
+                  }
+                }}
+                className="bg-transparent text-slate-200 font-semibold focus:outline-none cursor-pointer pr-1"
+              >
+                <option value="all" className="bg-slate-900 text-white">Any time</option>
+                <option value="today" className="bg-slate-900 text-white">Past 24 hours</option>
+                <option value="this_week" className="bg-slate-900 text-white">This week</option>
+                <option value="this_month" className="bg-slate-900 text-white">This month</option>
+                <option value="this_year" className="bg-slate-900 text-white">This year</option>
+              </select>
+            </div>
+
             <button
               type="submit"
               disabled={type === 'serp' ? isLoadingSerp : type === 'autocomplete' ? isLoadingAutocomplete : isLoading}
-              className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-rose-600/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+              className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-rose-600/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
               {(type === 'serp' ? isLoadingSerp : type === 'autocomplete' ? isLoadingAutocomplete : isLoading) ? (
                 <>
