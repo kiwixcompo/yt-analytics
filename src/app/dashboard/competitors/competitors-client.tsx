@@ -62,8 +62,24 @@ function CompetitorsClientContent() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setTrackedChannels(parsed);
-          setSelectedChannel(parsed[0]);
+          // Normalize any previously saved records that may lack a title
+          const normalized = parsed.map((item: any) => {
+            const chan = item.channel || item;
+            return {
+              id: chan.id || item.id || 'unknown',
+              title: chan.title || item.title || chan.customUrl || item.customUrl || 'Competitor Channel',
+              customUrl: chan.customUrl || item.customUrl || '',
+              thumbnail: chan.thumbnail || item.thumbnail || '',
+              subscriberCount: Number(chan.subscriberCount || item.subscriberCount || 0),
+              videoCount: Number(chan.videoCount || item.videoCount || 0),
+              medianViews: item.medianViews || 0,
+              recentVideos: item.recentVideos || item.topOutliers || [],
+              outlierVideos: item.outlierVideos || item.topOutliers || [],
+              addedAt: item.addedAt || new Date().toISOString(),
+            };
+          });
+          setTrackedChannels(normalized);
+          setSelectedChannel(normalized[0]);
           return;
         }
       }
@@ -102,8 +118,30 @@ function CompetitorsClientContent() {
       }
 
       const data = await res.json();
+      
+      // Handle both raw channel object and { channel, topOutliers } wrapper structure
+      const rawChan = data.channel || data;
+      const rawOutliers = data.topOutliers || data.outlierVideos || [];
+      const rawRecent = data.recentVideos || data.topOutliers || [];
+
+      // Calculate median views if not present
+      let median = rawChan.medianViews || data.medianViews;
+      if (!median && rawRecent.length > 0) {
+        const sortedViews = [...rawRecent].map((v: any) => v.views || v.viewCount || 0).sort((a, b) => a - b);
+        const mid = Math.floor(sortedViews.length / 2);
+        median = sortedViews.length % 2 !== 0 ? sortedViews[mid] : Math.round((sortedViews[mid - 1] + sortedViews[mid]) / 2);
+      }
+
       const channelData: CompetitorChannel = {
-        ...data,
+        id: rawChan.id || targetHandle,
+        title: rawChan.title || targetHandle.replace('@', ''),
+        customUrl: rawChan.customUrl || targetHandle,
+        thumbnail: rawChan.thumbnail || rawChan.thumbnails?.default?.url || '',
+        subscriberCount: Number(rawChan.subscriberCount || 0),
+        videoCount: Number(rawChan.videoCount || 0),
+        medianViews: median || 0,
+        recentVideos: rawRecent,
+        outlierVideos: rawOutliers,
         addedAt: new Date().toISOString(),
       };
 
@@ -232,14 +270,14 @@ function CompetitorsClientContent() {
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     {c.thumbnail ? (
-                      <img src={c.thumbnail} alt={c.title} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                      <img src={c.thumbnail} alt={c.title || 'Channel'} className="w-8 h-8 rounded-full object-cover shrink-0" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
-                        {c.title.charAt(0)}
+                        {(c.title || c.customUrl || 'C').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0">
-                      <h4 className="font-semibold text-slate-200 text-xs truncate">{c.title}</h4>
+                      <h4 className="font-semibold text-slate-200 text-xs truncate">{c.title || c.customUrl || 'Channel'}</h4>
                       <p className="text-[11px] text-slate-400">
                         {c.subscriberCount ? `${c.subscriberCount.toLocaleString()} subs` : c.customUrl || 'Channel'}
                       </p>

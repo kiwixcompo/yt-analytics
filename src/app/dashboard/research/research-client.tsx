@@ -645,58 +645,36 @@ function ResearchContent() {
 
             {/* Sub-Filters based on active view */}
             {type === 'serp' ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1 p-0.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSerpOutliersOnly(false);
-                      fetchLiveSerp(query, false, serpSubRange);
-                    }}
-                    className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                      !serpOutliersOnly
-                        ? 'bg-slate-800 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    All Page 1 Videos ({serpVideos.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSerpOutliersOnly(true);
-                      fetchLiveSerp(query, true, serpSubRange);
-                    }}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
-                      serpOutliersOnly
-                        ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-sm'
-                        : 'text-rose-400 hover:text-rose-300'
-                    }`}
-                  >
-                    <Flame className="w-3.5 h-3.5 fill-current" />
-                    <span>Outliers Only</span>
-                  </button>
-                </div>
-
-                {/* Sub Range Filter Dropdown */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-xl text-xs">
-                  <span className="text-slate-400 font-medium">Subscribers:</span>
-                  <select
-                    value={serpSubRange}
-                    onChange={(e) => {
-                      const next = e.target.value;
-                      setSerpSubRange(next);
-                      fetchLiveSerp(query, serpOutliersOnly, next);
-                    }}
-                    className="bg-transparent text-indigo-300 font-semibold focus:outline-none cursor-pointer"
-                  >
-                    {SUBSCRIBER_RANGES.map((r) => (
-                      <option key={r.value} value={r.value} className="bg-slate-900 text-slate-200">
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center gap-1 p-0.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSerpOutliersOnly(false);
+                    fetchLiveSerp(query, false);
+                  }}
+                  className={`px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                    !serpOutliersOnly
+                      ? 'bg-slate-800 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  All Page 1 Videos ({serpVideos.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSerpOutliersOnly(true);
+                    fetchLiveSerp(query, true);
+                  }}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                    serpOutliersOnly
+                      ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-sm'
+                      : 'text-rose-400 hover:text-rose-300'
+                  }`}
+                >
+                  <Flame className="w-3.5 h-3.5 fill-current" />
+                  <span>Outliers Only (&lt; 20k Subs)</span>
+                </button>
               </div>
             ) : type === 'autocomplete' ? (
               <div className="flex items-center gap-2">
