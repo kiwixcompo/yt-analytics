@@ -29,6 +29,7 @@ import {
   Play,
   Users,
   Calendar,
+  TrendingUp,
 } from 'lucide-react';
 import {
   saveKeywordsToVault,
@@ -37,6 +38,7 @@ import {
   DEFAULT_COLLECTION,
 } from '@/lib/vault-service';
 import OutlierExplorerModal, { SUBSCRIBER_RANGES } from '../components/outlier-explorer-modal';
+import KeywordDeepDiveModal from '../components/keyword-deep-dive-modal';
 
 interface KeywordMetric {
   keyword: string;
@@ -116,6 +118,15 @@ function ResearchContent() {
   const [serpUploadDate, setSerpUploadDate] = useState<string>('all');
   const [selectedExplorerVideo, setSelectedExplorerVideo] = useState<SerpVideo | null>(null);
   const [isExplorerModalOpen, setIsExplorerModalOpen] = useState(false);
+
+  // Deep Dive Dig Modal State
+  const [selectedDigKeyword, setSelectedDigKeyword] = useState<string | null>(null);
+  const [isDigModalOpen, setIsDigModalOpen] = useState(false);
+
+  // Hot Niche Trending Keywords State
+  const [hotNicheKeywords, setHotNicheKeywords] = useState<Array<{ keyword: string; tag: string; isBreakout: boolean }>>([]);
+  const [nicheLabel, setNicheLabel] = useState<string>('Niche Trends');
+  const [isLoadingHotNiche, setIsLoadingHotNiche] = useState(false);
 
   // Emulation Blueprint Modal States
   const [activeEmulationVideo, setActiveEmulationVideo] = useState<any>(null);
@@ -258,8 +269,25 @@ function ResearchContent() {
     }
   }, [initialQ, initialType]);
 
+  const fetchHotNicheKeywords = async () => {
+    setIsLoadingHotNiche(true);
+    try {
+      const res = await fetch('/api/keywords/hot-niche');
+      if (res.ok) {
+        const data = await res.json();
+        setHotNicheKeywords(data.keywords || []);
+        if (data.niche) setNicheLabel(data.niche);
+      }
+    } catch (e) {
+      console.error('Error fetching hot niche keywords:', e);
+    } finally {
+      setIsLoadingHotNiche(false);
+    }
+  };
+
   useEffect(() => {
     setVaultCollections(getCollections());
+    fetchHotNicheKeywords();
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -538,6 +566,71 @@ function ResearchContent() {
             </button>
           </div>
         </div>
+
+        {/* Hot Niche Trending Keywords (Google Trends-Style Channel Radar) */}
+        {hotNicheKeywords.length > 0 && (
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-950/25 via-slate-900/80 to-indigo-950/25 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="p-1 rounded bg-rose-500/20 text-rose-400">
+                  <Flame className="w-3.5 h-3.5" />
+                </span>
+                <span className="font-bold text-white tracking-wide">
+                  Hot Topics in {nicheLabel}
+                </span>
+                <span className="text-[10px] uppercase font-bold text-slate-500 hidden sm:inline">
+                  • Realtime Breakout Demand
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={fetchHotNicheKeywords}
+                disabled={isLoadingHotNiche}
+                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
+              >
+                <RefreshCw className={`w-3 h-3 ${isLoadingHotNiche ? 'animate-spin' : ''}`} />
+                <span>Refresh Trends</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {hotNicheKeywords.map((hk, idx) => (
+                <button
+                  key={hk.keyword + idx}
+                  type="button"
+                  onClick={() => {
+                    setQuery(hk.keyword);
+                    if (type === 'serp') {
+                      fetchLiveSerp(hk.keyword, serpOutliersOnly);
+                    } else if (type === 'autocomplete') {
+                      fetchYouTubeAutocomplete(hk.keyword, isDeepScout);
+                    } else {
+                      fetchFullResearch(hk.keyword, type);
+                    }
+                  }}
+                  className="shrink-0 px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs transition flex items-center gap-1.5 cursor-pointer group"
+                >
+                  <TrendingUp className="w-3 h-3 text-rose-400 group-hover:scale-110 transition" />
+                  <span className="font-semibold text-slate-200 group-hover:text-white">
+                    {hk.keyword}
+                  </span>
+                  <span
+                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                      hk.tag.includes('Hot')
+                        ? 'bg-rose-500/20 text-rose-400'
+                        : hk.tag.includes('Rising')
+                        ? 'bg-indigo-500/20 text-indigo-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {hk.tag}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Search & Mode Toolbar */}
         <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
@@ -1246,20 +1339,23 @@ function ResearchContent() {
                       </th>
 
                       {/* Recommendation */}
-                      <th className="py-3.5 px-4">Opportunity Recommendation</th>
+                      <th className="py-3.5 px-4 text-left">Opportunity Recommendation</th>
+
+                      {/* Actions: Dig & Studio */}
+                      <th className="py-3.5 px-4 text-center">Dig Deeper</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={9} className="py-12 text-center text-slate-400">
+                        <td colSpan={10} className="py-12 text-center text-slate-400">
                           <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-rose-500" />
                           Loading comprehensive keyword results...
                         </td>
                       </tr>
                     ) : paginatedKeywords.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="py-12 text-center text-slate-400">
+                        <td colSpan={10} className="py-12 text-center text-slate-400">
                           No keyword records found for this query. Try a different seed.
                         </td>
                       </tr>
@@ -1343,6 +1439,20 @@ function ResearchContent() {
                             </td>
                             <td className="py-3 px-4 text-slate-300 text-[11px]">
                               {kw.suggestedAction}
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDigKeyword(kw.keyword);
+                                  setIsDigModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-[11px] font-bold transition cursor-pointer"
+                                title="Dig deeper into keywords containing or matching this topic"
+                              >
+                                <Sparkles className="w-3 h-3 text-indigo-400" />
+                                <span>Dig</span>
+                              </button>
                             </td>
                           </tr>
                         );
@@ -1641,6 +1751,20 @@ function ResearchContent() {
         isOpen={isExplorerModalOpen}
         onClose={() => setIsExplorerModalOpen(false)}
         onOpenEmulation={handleOpenEmulation}
+      />
+
+      {/* Keyword Deep Dive / Dig Deeper Modal */}
+      <KeywordDeepDiveModal
+        keyword={selectedDigKeyword}
+        isOpen={isDigModalOpen}
+        onClose={() => setIsDigModalOpen(false)}
+        onSelectKeyword={(newKw) => {
+          setQuery(newKw);
+          fetchFullResearch(newKw, type);
+        }}
+        onOpenStudio={(kw) => {
+          window.location.href = `/dashboard/studio?topic=${encodeURIComponent(kw)}`;
+        }}
       />
 
       {/* Save Success Toast */}
