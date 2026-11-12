@@ -21,6 +21,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
+  Flame,
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,6 +35,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard, exactMatch: true },
+  { href: '/dashboard/most-searched', label: 'Most Searched', icon: Flame, badge: 'Hot' },
   { href: '/dashboard/research', label: 'Keyword Research', icon: Search },
   { href: '/dashboard/vault', label: 'Keyword Vault', icon: Bookmark },
   { href: '/dashboard/studio', label: 'Content Studio', icon: Clapperboard },
