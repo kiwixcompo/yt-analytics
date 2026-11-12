@@ -116,6 +116,8 @@ function ResearchContent() {
   const [serpOutliersOnly, setSerpOutliersOnly] = useState(false);
   const [serpSubRange, setSerpSubRange] = useState<string>('all');
   const [serpUploadDate, setSerpUploadDate] = useState<string>('all');
+  const [serpPage, setSerpPage] = useState(1);
+  const [serpPageSize, setSerpPageSize] = useState(10);
   const [selectedExplorerVideo, setSelectedExplorerVideo] = useState<SerpVideo | null>(null);
   const [isExplorerModalOpen, setIsExplorerModalOpen] = useState(false);
 
@@ -182,6 +184,7 @@ function ResearchContent() {
       const data = await res.json();
       setSerpVideos(data.videos || []);
       setSerpAnalysis(data.analysis || null);
+      setSerpPage(1);
     } catch (err) {
       console.error('Failed to fetch live SERP videos:', err);
     } finally {
@@ -510,6 +513,13 @@ function ResearchContent() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  // Paginated slice of SERP videos
+  const serpTotalPages = Math.max(1, Math.ceil(serpVideos.length / serpPageSize));
+  const paginatedSerpVideos = useMemo(() => {
+    const start = (serpPage - 1) * serpPageSize;
+    return serpVideos.slice(start, start + serpPageSize);
+  }, [serpVideos, serpPage, serpPageSize]);
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -919,17 +929,39 @@ function ResearchContent() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-slate-400 pb-1">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-2 pb-1">
                   <span>
-                    Showing <strong>{serpVideos.length} live YouTube videos</strong>:
+                    Showing <strong>{serpVideos.length > 0 ? (serpPage - 1) * serpPageSize + 1 : 0}</strong> -{' '}
+                    <strong>{Math.min(serpPage * serpPageSize, serpVideos.length)}</strong> of{' '}
+                    <strong>{serpVideos.length} live YouTube videos</strong>:
                   </span>
-                  <span className="text-emerald-400 flex items-center gap-1 font-semibold text-[11px]">
-                    ✓ Live Search Index Verified
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 text-[11px]">
+                      <span className="text-slate-500 font-semibold">Per page:</span>
+                      <select
+                        value={serpPageSize}
+                        onChange={(e) => {
+                          setSerpPageSize(Number(e.target.value));
+                          setSerpPage(1);
+                        }}
+                        className="bg-transparent text-slate-200 font-bold focus:outline-none cursor-pointer"
+                      >
+                        <option value={5} className="bg-slate-900 text-white">5</option>
+                        <option value={10} className="bg-slate-900 text-white">10</option>
+                        <option value={20} className="bg-slate-900 text-white">20</option>
+                      </select>
+                    </div>
+
+                    <span className="text-emerald-400 flex items-center gap-1 font-semibold text-[11px]">
+                      ✓ Live Search Index Verified
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                  {serpVideos.map((video, idx) => (
+                  {paginatedSerpVideos.map((video, idx) => {
+                    const globalIdx = (serpPage - 1) * serpPageSize + idx;
+                    return (
                     <div
                       key={video.id + idx}
                       className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition flex flex-col md:flex-row gap-4 group"
@@ -947,7 +979,7 @@ function ResearchContent() {
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         />
                         <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[10px] font-bold text-white border border-white/10">
-                          #{idx + 1}
+                          #{globalIdx + 1}
                         </div>
                         {video.lengthText && (
                           <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-semibold text-white">
@@ -1041,8 +1073,57 @@ function ResearchContent() {
                         )}
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
+
+                {/* SERP Pagination Controls */}
+                {serpTotalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400">
+                    <div>
+                      Page <strong>{serpPage}</strong> of <strong>{serpTotalPages}</strong> ({serpVideos.length} total videos)
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSerpPage((p) => Math.max(1, p - 1))}
+                        disabled={serpPage === 1}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Previous</span>
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: serpTotalPages }, (_, i) => i + 1).map((pg) => (
+                          <button
+                            key={pg}
+                            type="button"
+                            onClick={() => setSerpPage(pg)}
+                            className={`w-7 h-7 rounded-lg text-xs font-bold transition ${
+                              serpPage === pg
+                                ? 'bg-rose-600 text-white shadow-sm'
+                                : 'bg-slate-800 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {pg}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSerpPage((p) => Math.min(serpTotalPages, p + 1))}
+                        disabled={serpPage === serpTotalPages}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition font-semibold"
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1145,6 +1226,19 @@ function ResearchContent() {
 
                         {/* Right: Actions */}
                         <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDigKeyword(item.keyword);
+                              setIsDigModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-[11px] font-bold transition cursor-pointer"
+                            title="Dig deeper into this autocomplete keyword"
+                          >
+                            <Sparkles className="w-3 h-3 text-indigo-400" />
+                            <span>Dig</span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => {

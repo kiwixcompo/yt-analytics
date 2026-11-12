@@ -131,6 +131,7 @@ export async function GET(request: NextRequest) {
       [];
 
     const rawVideos: any[] = [];
+    let continuationToken: string | null = null;
 
     for (const section of contents) {
       const items = section.itemSectionRenderer?.contents || [];
@@ -182,17 +183,125 @@ export async function GET(request: NextRequest) {
           });
         }
       }
+
+      if (section.continuationItemRenderer) {
+        continuationToken =
+          section.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null;
+      }
     }
 
-    // Process videos with subscriber counts in parallel
-    // If outlierOnly is requested, inspect up to 25 raw items to find qualifying hidden gems
-    // Subscriber filter parameters:
-    // Support either maxSubs or range: minSubs and maxSubs
+    // Check if continuation token is at root of contents
+    if (!continuationToken) {
+      const contRoot = contents.find((c: any) => c.continuationItemRenderer);
+      if (contRoot) {
+        continuationToken =
+          contRoot.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null;
+      }
+    }
+
+    // Subscriber & filter parameters:
     const minSubsParam = parseInt(request.nextUrl.searchParams.get('minSubs') || '0', 10);
     const maxSubsParam = parseInt(request.nextUrl.searchParams.get('maxSubs') || '100000000', 10);
     const filterOutliers = request.nextUrl.searchParams.get('outliers') === 'true';
-    const subRange = request.nextUrl.searchParams.get('subRange') || ''; // e.g. "0-1k", "1k-5k", "5k-10k", "10k-20k", "20k-50k", "under-100k"
-    const uploadDate = request.nextUrl.searchParams.get('uploadDate') || 'all'; // "all" | "today" | "this_week" | "this_month" | "this_year"
+    const subRange = request.nextUrl.searchParams.get('subRange') || '';
+    const uploadDate = request.nextUrl.searchParams.get('uploadDate') || 'all';
+
+    // Deep Crawl for Outliers & Multi-Page Scanning:
+    // When outlier mode is selected, or if more videos are needed, fetch Page 2 & Page 3 results
+    // directly from YouTube's continuation cluster
+    if (filterOutliers && continuationToken) {
+      let currentToken = continuationToken;
+      for (let page = 2; page <= 4; page++) {
+        if (!currentToken || rawVideos.length >= 60) break;
+        try {
+          const contRes = await fetch('https://www.youtube.com/youtubei/v1/search?prettyPrint=false', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            },
+            body: JSON.stringify({
+              context: {
+                client: {
+                  clientName: 'WEB',
+                  clientVersion: '2.20240401.00.00',
+                },
+              },
+              continuation: currentToken,
+            }),
+            next: { revalidate: 300 },
+          });
+
+          if (!contRes.ok) break;
+          const contJson = await contRes.json();
+          const actions =
+            contJson.onResponseReceivedCommands?.[0]?.appendContinuationItemsAction?.continuationItems ||
+            [];
+
+          currentToken = '';
+          for (const actionItem of actions) {
+            const subItems = actionItem.itemSectionRenderer?.contents || [];
+            for (const item of subItems) {
+              if (item.videoRenderer) {
+                const vr = item.videoRenderer;
+                const videoId = vr.videoId;
+                if (!videoId) continue;
+
+                const title = vr.title?.runs?.map((r: any) => r.text).join('') || 'Untitled';
+                const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+                const channelTitle = vr.ownerText?.runs?.[0]?.text || 'YouTube Creator';
+                const channelNav = vr.ownerText?.runs?.[0]?.navigationEndpoint;
+                const channelUrl = channelNav?.commandMetadata?.webCommandMetadata?.url
+                  ? `https://www.youtube.com${channelNav.commandMetadata.webCommandMetadata.url}`
+                  : '#';
+                const channelId =
+                  channelNav?.browseEndpoint?.browseId ||
+                  vr.channelThumbnailSupportedRenderers?.channelThumbnailWithLinkRenderer?.navigationEndpoint?.browseEndpoint?.browseId;
+                const channelAvatar =
+                  vr.channelThumbnailSupportedRenderers?.channelThumbnailWithLinkRenderer?.thumbnail?.thumbnails?.[0]?.url;
+                const viewsText = vr.viewCountText?.simpleText || vr.shortViewCountText?.simpleText || '0 views';
+                const viewsCount = parseCount(viewsText);
+                const publishedTime = vr.publishedTimeText?.simpleText || '';
+                const lengthText = vr.lengthText?.simpleText || '';
+                const badges = (vr.badges || [])
+                  .map((b: any) => b.metadataBadgeRenderer?.label)
+                  .filter(Boolean);
+                const snippet =
+                  vr.detailedMetadataSnippets?.[0]?.snippetText?.runs?.map((r: any) => r.text).join('') ||
+                  '';
+
+                rawVideos.push({
+                  id: videoId,
+                  title,
+                  url: `https://www.youtube.com/watch?v=${videoId}`,
+                  thumbnail,
+                  channelTitle,
+                  channelUrl,
+                  channelId,
+                  channelAvatar,
+                  viewsText,
+                  viewsCount,
+                  publishedTime,
+                  lengthText,
+                  badges,
+                  snippet,
+                });
+              }
+            }
+
+            if (actionItem.continuationItemRenderer) {
+              currentToken =
+                actionItem.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token ||
+                '';
+            }
+          }
+        } catch (e) {
+          console.warn('Continuation pagination error:', e);
+          break;
+        }
+      }
+    }
 
     // Derive effective min & max from range token if supplied
     let effectiveMinSubs = minSubsParam;
@@ -219,7 +328,7 @@ export async function GET(request: NextRequest) {
     } else if (filterOutliers && !request.nextUrl.searchParams.has('maxSubs')) {
       effectiveMaxSubs = 50000; // default cap for outliers if not specified
     }
-    const targetSlice = filterOutliers ? rawVideos.slice(0, 25) : rawVideos.slice(0, 15);
+    const targetSlice = filterOutliers ? rawVideos.slice(0, 50) : rawVideos.slice(0, 20);
 
     const uniqueChannelIds = Array.from(
       new Set(targetSlice.map((v) => v.channelId).filter(Boolean))
@@ -244,17 +353,20 @@ export async function GET(request: NextRequest) {
 
       // Ratio: viewsCount / channelSubscriberCount
       // Outlier criteria:
-      // High view-to-sub ratio (>1.5x) or strong performance for channels under 20k subscribers
+      // High view-to-sub ratio (>1.2x) or small channel breakthrough
+      // Or channels under 20k subscribers with high viral views
       if (channelSubscriberCount > 0) {
         ratio = Math.round((v.viewsCount / channelSubscriberCount) * 10) / 10;
         if (
           channelSubscriberCount >= effectiveMinSubs &&
           channelSubscriberCount <= effectiveMaxSubs &&
-          v.viewsCount > channelSubscriberCount &&
-          ratio >= 1.2
+          (v.viewsCount >= channelSubscriberCount * 1.2 || (channelSubscriberCount <= 25000 && v.viewsCount >= 10000))
         ) {
           isOutlierHit = true;
         }
+      } else if (channelSubscriberCount === 0 && v.viewsCount >= 5000) {
+        // If creator subscriber count is hidden but video achieved >5k views, qualify as potential breakout
+        isOutlierHit = true;
       }
 
       let emulationRecommendation: SerpVideo['emulationRecommendation'] = undefined;
