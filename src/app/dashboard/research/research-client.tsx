@@ -126,8 +126,24 @@ function ResearchContent() {
   const [isDigModalOpen, setIsDigModalOpen] = useState(false);
 
   // Hot Niche Trending Keywords State
-  const [hotNicheKeywords, setHotNicheKeywords] = useState<Array<{ keyword: string; tag: string; isBreakout: boolean }>>([]);
-  const [nicheLabel, setNicheLabel] = useState<string>('Niche Trends');
+  const [hotNicheKeywords, setHotNicheKeywords] = useState<Array<{
+    keyword: string;
+    root: string;
+    tag: string;
+    volumeTier: 'huge' | 'large' | 'medium' | 'normal';
+    searchScore: number;
+    isBreakout: boolean;
+  }>>([]);
+  const [nicheLabel, setNicheLabel] = useState<string>('Channel Niche');
+  const [selectedNicheKey, setSelectedNicheKey] = useState<string>('channel');
+  const [availableNiches, setAvailableNiches] = useState<Array<{ key: string; label: string }>>([
+    { key: 'channel', label: 'My Channel Niche' },
+    { key: 'tech', label: 'Tech & AI' },
+    { key: 'gaming', label: 'Gaming & Esports' },
+    { key: 'finance', label: 'Finance & Business' },
+    { key: 'entertainment', label: 'Entertainment & Pop' },
+    { key: 'productivity', label: 'Productivity & Education' },
+  ]);
   const [isLoadingHotNiche, setIsLoadingHotNiche] = useState(false);
 
   // Emulation Blueprint Modal States
@@ -272,14 +288,15 @@ function ResearchContent() {
     }
   }, [initialQ, initialType]);
 
-  const fetchHotNicheKeywords = async () => {
+  const fetchHotNicheKeywords = async (nicheChoice = selectedNicheKey) => {
     setIsLoadingHotNiche(true);
     try {
-      const res = await fetch('/api/keywords/hot-niche');
+      const res = await fetch(`/api/keywords/hot-niche?niche=${encodeURIComponent(nicheChoice)}`);
       if (res.ok) {
         const data = await res.json();
         setHotNicheKeywords(data.keywords || []);
         if (data.niche) setNicheLabel(data.niche);
+        if (data.availableNiches) setAvailableNiches(data.availableNiches);
       }
     } catch (e) {
       console.error('Error fetching hot niche keywords:', e);
@@ -577,67 +594,123 @@ function ResearchContent() {
           </div>
         </div>
 
-        {/* Hot Niche Trending Keywords (Google Trends-Style Channel Radar) */}
+        {/* Hot Niche Trending Keywords (Google Trends-Style Channel Radar & Tag Cloud) */}
         {hotNicheKeywords.length > 0 && (
-          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-950/25 via-slate-900/80 to-indigo-950/25 border border-slate-800 space-y-2">
-            <div className="flex items-center justify-between text-xs">
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-rose-950/30 via-slate-900/90 to-indigo-950/30 border border-slate-800 shadow-xl space-y-3.5">
+            {/* Header with Niche Category Selector (Google Trends style) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800/80">
               <div className="flex items-center gap-2">
-                <span className="p-1 rounded bg-rose-500/20 text-rose-400">
-                  <Flame className="w-3.5 h-3.5" />
+                <span className="p-1.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 shadow-sm">
+                  <Flame className="w-4 h-4 fill-rose-500/40" />
                 </span>
-                <span className="font-bold text-white tracking-wide">
-                  Hot Topics in {nicheLabel}
-                </span>
-                <span className="text-[10px] uppercase font-bold text-slate-500 hidden sm:inline">
-                  • Realtime Breakout Demand
-                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-sm tracking-wide">
+                      Hot Topics &amp; Most Searched in {nicheLabel}
+                    </span>
+                    <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                      Live Pulse
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Sized by search popularity &amp; watch breakout demand. Click any topic to research.
+                  </p>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={fetchHotNicheKeywords}
-                disabled={isLoadingHotNiche}
-                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
-              >
-                <RefreshCw className={`w-3 h-3 ${isLoadingHotNiche ? 'animate-spin' : ''}`} />
-                <span>Refresh Trends</span>
-              </button>
+              {/* Niche Selector & Refresh Controls */}
+              <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-xl text-xs">
+                  <span className="text-slate-400 font-semibold text-[11px]">Niche:</span>
+                  <select
+                    value={selectedNicheKey}
+                    onChange={(e) => {
+                      const newNiche = e.target.value;
+                      setSelectedNicheKey(newNiche);
+                      fetchHotNicheKeywords(newNiche);
+                    }}
+                    className="bg-transparent text-indigo-300 font-bold focus:outline-none cursor-pointer text-xs pr-1"
+                  >
+                    {availableNiches.map((n) => (
+                      <option key={n.key} value={n.key} className="bg-slate-900 text-slate-200">
+                        {n.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => fetchHotNicheKeywords(selectedNicheKey)}
+                  disabled={isLoadingHotNiche}
+                  className="p-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
+                  title="Refresh Hot Trends"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingHotNiche ? 'animate-spin text-rose-400' : ''}`} />
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {hotNicheKeywords.map((hk, idx) => (
-                <button
-                  key={hk.keyword + idx}
-                  type="button"
-                  onClick={() => {
-                    setQuery(hk.keyword);
-                    if (type === 'serp') {
-                      fetchLiveSerp(hk.keyword, serpOutliersOnly);
-                    } else if (type === 'autocomplete') {
-                      fetchYouTubeAutocomplete(hk.keyword, isDeepScout);
-                    } else {
-                      fetchFullResearch(hk.keyword, type);
-                    }
-                  }}
-                  className="shrink-0 px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs transition flex items-center gap-1.5 cursor-pointer group"
-                >
-                  <TrendingUp className="w-3 h-3 text-rose-400 group-hover:scale-110 transition" />
-                  <span className="font-semibold text-slate-200 group-hover:text-white">
-                    {hk.keyword}
-                  </span>
-                  <span
-                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
-                      hk.tag.includes('Hot')
-                        ? 'bg-rose-500/20 text-rose-400'
-                        : hk.tag.includes('Rising')
-                        ? 'bg-indigo-500/20 text-indigo-300'
-                        : 'bg-slate-800 text-slate-400'
+            {/* Keyword Tag Cloud (Most searched keywords appear prominent & larger) */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              {hotNicheKeywords.map((hk, idx) => {
+                // Determine visual weight and styling based on searchScore / volumeTier
+                const isTopHot = hk.volumeTier === 'huge';
+                const isLarge = hk.volumeTier === 'large';
+                const isMedium = hk.volumeTier === 'medium';
+
+                return (
+                  <button
+                    key={hk.keyword + idx}
+                    type="button"
+                    onClick={() => {
+                      setQuery(hk.keyword);
+                      if (type === 'serp') {
+                        fetchLiveSerp(hk.keyword, serpOutliersOnly);
+                      } else if (type === 'autocomplete') {
+                        fetchYouTubeAutocomplete(hk.keyword, isDeepScout);
+                      } else {
+                        fetchFullResearch(hk.keyword, type);
+                      }
+                    }}
+                    className={`transition-all duration-200 cursor-pointer rounded-2xl flex items-center gap-2 active:scale-95 group shadow-sm ${
+                      isTopHot
+                        ? 'px-4 py-2.5 bg-gradient-to-r from-rose-600/30 via-purple-600/30 to-indigo-600/30 border-2 border-rose-500/60 hover:border-rose-400 text-white font-black text-sm hover:shadow-rose-600/20 shadow-md'
+                        : isLarge
+                        ? 'px-3.5 py-2 bg-slate-900/90 hover:bg-slate-800 border border-rose-500/40 hover:border-rose-400 text-rose-200 hover:text-white font-bold text-xs'
+                        : isMedium
+                        ? 'px-3 py-1.5 bg-slate-900/80 hover:bg-slate-800 border border-indigo-500/30 hover:border-indigo-400 text-indigo-200 hover:text-white font-semibold text-xs'
+                        : 'px-2.5 py-1.5 bg-slate-950/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-medium text-xs'
                     }`}
                   >
-                    {hk.tag}
-                  </span>
-                </button>
-              ))}
+                    <TrendingUp
+                      className={`transition ${
+                        isTopHot
+                          ? 'w-4 h-4 text-rose-400 group-hover:scale-125'
+                          : isLarge
+                          ? 'w-3.5 h-3.5 text-rose-400 group-hover:scale-110'
+                          : 'w-3 h-3 text-indigo-400'
+                      }`}
+                    />
+
+                    <span className="tracking-tight">{hk.keyword}</span>
+
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                        isTopHot
+                          ? 'bg-rose-500 text-white shadow-sm'
+                          : isLarge
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : isMedium
+                          ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {hk.tag}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

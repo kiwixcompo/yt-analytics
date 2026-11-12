@@ -17,6 +17,10 @@ import {
   X,
   Zap,
   Puzzle,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 
 interface NavItem {
@@ -41,6 +45,7 @@ const navItems: NavItem[] = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 
   const isActive = (item: NavItem): boolean => {
@@ -51,20 +56,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const closeSidebar = () => setSidebarOpen(false);
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-slate-800">
-        <img
-          src="/logo.svg"
-          alt="VidPulse Studio Logo"
-          className="w-8 h-8 rounded-xl shrink-0 shadow-md shadow-rose-600/20"
-        />
-        <span className="font-bold text-sm text-white tracking-tight">VidPulse Studio</span>
+      <div
+        className={`flex items-center gap-2.5 px-4 py-4 border-b border-slate-800 ${
+          collapsed ? 'justify-center' : 'justify-between'
+        }`}
+      >
+        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+          <img
+            src="/logo.svg"
+            alt="VidPulse Studio Logo"
+            className="w-8 h-8 rounded-xl shrink-0 shadow-md shadow-rose-600/20"
+          />
+          {!collapsed && (
+            <span className="font-bold text-sm text-white tracking-tight truncate">
+              VidPulse Studio
+            </span>
+          )}
+        </Link>
+
+        {/* Desktop Collapse Toggle Button inside header */}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+          title={collapsed ? 'Expand sidebar' : 'Minimize sidebar to icons'}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+      <nav className={`flex-1 py-4 space-y-1 overflow-y-auto ${collapsed ? 'px-2' : 'px-3'}`}>
         {navItems.map((item) => {
           const active = isActive(item);
           const Icon = item.icon;
@@ -75,10 +100,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 onClick={closeSidebar}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors"
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors ${
+                  collapsed ? 'justify-center px-0' : ''
+                }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
+                {!collapsed && <span>{item.label}</span>}
               </a>
             );
           }
@@ -88,15 +116,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               key={item.href}
               href={item.href}
               onClick={closeSidebar}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              title={collapsed ? item.label : undefined}
+              className={`flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                collapsed ? 'justify-center px-0' : 'px-3'
+              } ${
                 active
-                  ? 'bg-rose-500/10 text-rose-400 border-r-2 border-rose-500'
+                  ? 'bg-rose-500/10 text-rose-400 font-bold border-r-2 border-rose-500 shadow-sm'
                   : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
               }`}
             >
               <Icon className="w-4 h-4 shrink-0" />
-              <span className="flex-1">{item.label}</span>
-              {item.badge && (
+              {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+              {!collapsed && item.badge && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-slate-700">
                   {item.badge}
                 </span>
@@ -110,16 +141,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="mx-3 border-t border-slate-800" />
 
       {/* Bottom section */}
-      <div className="p-4">
+      <div className={`p-3 ${collapsed ? 'flex justify-center' : ''}`}>
         <a
           href="http://localhost:3000/dashboard"
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 transition-colors"
+          title={collapsed ? 'Chrome Extension' : undefined}
+          className={`flex items-center gap-2.5 py-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 transition-colors ${
+            collapsed ? 'justify-center px-0' : 'px-3'
+          }`}
         >
           <Puzzle className="w-4 h-4 shrink-0 text-indigo-400" />
-          <div className="min-w-0">
-            <div className="font-semibold text-slate-400">Chrome Extension</div>
-            <div className="text-[10px] text-slate-600 truncate">Also available in your browser</div>
-          </div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <div className="font-semibold text-slate-400 truncate">Chrome Extension</div>
+              <div className="text-[10px] text-slate-600 truncate">Also available in browser</div>
+            </div>
+          )}
         </a>
       </div>
     </div>
@@ -127,9 +163,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
-      {/* ── Desktop Sidebar ── */}
-      <aside className="hidden md:flex flex-col w-60 shrink-0 bg-slate-900 border-r border-slate-800">
-        <SidebarContent />
+      {/* ── Desktop Sidebar (Dynamic Width when collapsed) ── */}
+      <aside
+        className={`hidden md:flex flex-col shrink-0 bg-slate-900 border-r border-slate-800 transition-all duration-300 ${
+          isCollapsed ? 'w-16' : 'w-60'
+        }`}
+      >
+        <SidebarContent collapsed={isCollapsed} />
       </aside>
 
       {/* ── Mobile Sidebar Overlay Backdrop ── */}
@@ -155,14 +195,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         >
           <X className="w-4 h-4" />
         </button>
-        <SidebarContent />
+        <SidebarContent collapsed={false} />
       </aside>
 
       {/* ── Main Content Area ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Top Bar */}
         <header className="sticky top-0 z-20 h-14 flex items-center justify-between px-4 border-b border-slate-800 bg-slate-900/60 backdrop-blur-md shrink-0">
-          {/* Left: mobile hamburger + breadcrumb */}
+          {/* Left: mobile hamburger + desktop collapse trigger + breadcrumb */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -171,9 +211,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Menu className="w-5 h-5" />
             </button>
-            {/* VidPulse logo text (desktop only, hidden on mobile since sidebar shows it) */}
-            <div className="hidden md:flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-rose-600 to-indigo-600 flex items-center justify-center">
+
+            {/* Desktop Quick Toggle Icon */}
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title={isCollapsed ? 'Expand sidebar' : 'Minimize sidebar to icons'}
+            >
+              {isCollapsed ? (
+                <PanelLeft className="w-4 h-4 text-indigo-400" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {/* VidPulse logo text */}
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-rose-600 to-indigo-600 flex items-center justify-center shadow-sm">
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
               <span className="font-bold text-sm text-white">VidPulse</span>

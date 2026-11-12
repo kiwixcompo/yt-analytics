@@ -2,49 +2,86 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getRecentVideos } from '@/lib/youtube-service';
 
-// Common stop words to strip out of channel topics
+// Stop words that carry little search topic relevance
 const STOP_WORDS = new Set([
   'the', 'and', 'for', 'with', 'that', 'this', 'from', 'your', 'have', 'more',
   'what', 'when', 'where', 'which', 'who', 'how', 'video', 'youtube', 'channel',
   'watch', 'full', 'episode', 'official', 'review', 'part', 'best', '2025', '2026',
+  'used', 'ings', 'leon', 'will', 'make', 'just', 'some', 'about', 'like', 'into',
+  'after', 'before', 'first', 'last', 'only', 'very', 'than', 'them',
 ]);
 
-// Standard high-velocity discovery buckets by broad niche category
-const NICHE_FALLBACK_HOT_KEYWORDS: Record<string, string[]> = {
-  tech: [
-    'artificial intelligence',
-    'cursor ai',
-    'deepseek',
-    'nextjs 15',
-    'claude 3.7',
-    'python automation',
-    'apple intelligence',
-    'web development',
-  ],
-  gaming: [
-    'gta 6 gameplay',
-    'ps5 pro review',
-    'unreal engine 5',
-    'elden ring dlc',
-    'minecraft update',
-    'fortnite season',
-  ],
-  finance: [
-    'passive income 2026',
-    'dividend investing',
-    'crypto bull run',
-    'side hustles',
-    'high yield savings',
-    'stock market crash',
-  ],
-  general: [
-    'ai tools 2026',
-    'breakthrough technology',
-    'passive income',
-    'productivity setup',
-    'algorithm update',
-    'viral case study',
-  ],
+export interface NicheHotKeyword {
+  keyword: string;
+  root: string;
+  tag: string;
+  volumeTier: 'huge' | 'large' | 'medium' | 'normal';
+  searchScore: number; // 10 - 100 for visual tag cloud scaling
+  isBreakout: boolean;
+}
+
+// Built-in categories (matching Google Trends taxonomy)
+export const GOOGLE_TRENDS_NICHES: Record<string, { label: string; seeds: string[] }> = {
+  channel: {
+    label: 'My Channel Niche',
+    seeds: [],
+  },
+  tech: {
+    label: 'Tech & AI',
+    seeds: [
+      'artificial intelligence',
+      'cursor ai',
+      'deepseek',
+      'nextjs 15',
+      'claude 3.7',
+      'python automation',
+      'apple intelligence',
+      'chatgpt',
+    ],
+  },
+  gaming: {
+    label: 'Gaming & Esports',
+    seeds: [
+      'gta 6 gameplay',
+      'ps5 pro review',
+      'unreal engine 5',
+      'elden ring',
+      'minecraft update',
+      'fortnite',
+      'roblox',
+    ],
+  },
+  finance: {
+    label: 'Finance & Business',
+    seeds: [
+      'passive income',
+      'dividend investing',
+      'crypto bull run',
+      'side hustles 2026',
+      'stock market',
+      'high yield savings',
+    ],
+  },
+  entertainment: {
+    label: 'Entertainment & Pop',
+    seeds: [
+      'movie trailers 2026',
+      'netflix series',
+      'celebrity news',
+      'box office review',
+      'anime season',
+    ],
+  },
+  productivity: {
+    label: 'Productivity & Education',
+    seeds: [
+      'study with me',
+      'notion setup',
+      'time management',
+      'morning routine',
+      'learning to code',
+    ],
+  },
 };
 
 async function fetchYouTubeAutocomplete(term: string): Promise<string[]> {
@@ -70,26 +107,26 @@ async function fetchYouTubeAutocomplete(term: string): Promise<string[]> {
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    const explicitNiche = request.nextUrl.searchParams.get('niche') || '';
+    const selectedNiche = request.nextUrl.searchParams.get('niche') || 'channel';
 
     let candidateRoots: string[] = [];
     let detectedNicheLabel = 'Channel Niche';
 
-    // 1. If user is signed in to a channel session, extract channel niche from recent video titles
-    if (session) {
+    // 1. If 'channel' selected (or default) and user has a channel session
+    if (selectedNiche === 'channel' && session) {
       try {
-        const recentVideos = await getRecentVideos(session, 15);
+        const recentVideos = await getRecentVideos(session, 20);
         if (recentVideos && recentVideos.length > 0) {
           const wordFreq: Record<string, number> = {};
 
           recentVideos.forEach((v: any) => {
-            const words = (v.title || '')
+            const rawWords = (v.title || '')
               .toLowerCase()
               .replace(/[^a-z0-9\s]/g, ' ')
               .split(/\s+/)
-              .filter((w: string) => w.length > 2 && !STOP_WORDS.has(w));
+              .filter((w: string) => w.length > 3 && !STOP_WORDS.has(w));
 
-            words.forEach((w: string) => {
+            rawWords.forEach((w: string) => {
               wordFreq[w] = (wordFreq[w] || 0) + 1;
             });
 
@@ -97,7 +134,7 @@ export async function GET(request: NextRequest) {
             if (Array.isArray(v.tags)) {
               v.tags.forEach((tag: string) => {
                 const clean = tag.toLowerCase().trim();
-                if (clean.length > 2 && !STOP_WORDS.has(clean)) {
+                if (clean.length > 3 && !STOP_WORDS.has(clean)) {
                   wordFreq[clean] = (wordFreq[clean] || 0) + 2;
                 }
               });
@@ -112,7 +149,7 @@ export async function GET(request: NextRequest) {
 
           if (topWords.length > 0) {
             candidateRoots = topWords;
-            detectedNicheLabel = `${session.channel.title || 'Channel'} • Hot Trends`;
+            detectedNicheLabel = `${session.channel.title || 'Channel'}`;
           }
         }
       } catch (err) {
@@ -120,19 +157,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. Fallbacks if no channel session or not enough recent videos
-    if (candidateRoots.length === 0) {
-      if (explicitNiche && NICHE_FALLBACK_HOT_KEYWORDS[explicitNiche.toLowerCase()]) {
-        candidateRoots = NICHE_FALLBACK_HOT_KEYWORDS[explicitNiche.toLowerCase()];
-        detectedNicheLabel = `${explicitNiche.toUpperCase()} Trending`;
-      } else {
-        candidateRoots = ['ai tools', 'coding tutorial', 'passive income', 'productivity', 'gta 6'];
-        detectedNicheLabel = 'Trending Across YouTube';
-      }
+    // 2. If explicit niche selected or channel extraction had insufficient tokens
+    if (candidateRoots.length === 0 || selectedNiche !== 'channel') {
+      const nicheConfig = GOOGLE_TRENDS_NICHES[selectedNiche] || GOOGLE_TRENDS_NICHES.tech;
+      candidateRoots = nicheConfig.seeds;
+      detectedNicheLabel = nicheConfig.label;
     }
 
     // 3. For each candidate root, query live autocomplete clusters to get currently hot search phrases
-    const hotListP = candidateRoots.slice(0, 4).map(async (root) => {
+    const hotListP = candidateRoots.slice(0, 5).map(async (root) => {
       const suggestions = await fetchYouTubeAutocomplete(root);
       return {
         root,
@@ -142,48 +175,71 @@ export async function GET(request: NextRequest) {
 
     const gathered = await Promise.all(hotListP);
 
-    // Flatten and deduplicate
-    const finalKeywords: Array<{
-      keyword: string;
-      root: string;
-      tag: string;
-      isBreakout: boolean;
-    }> = [];
-
+    // Flatten and compute visual tag-cloud metrics
+    const finalKeywords: NicheHotKeyword[] = [];
     const seen = new Set<string>();
 
-    // First add the high-level seed roots
-    candidateRoots.slice(0, 3).forEach((r) => {
-      if (!seen.has(r)) {
-        seen.add(r);
+    // Add broad anchors first
+    candidateRoots.slice(0, 3).forEach((r, idx) => {
+      const clean = r.trim().toLowerCase();
+      if (!seen.has(clean) && clean.length > 3) {
+        seen.add(clean);
         finalKeywords.push({
           keyword: r,
           root: r,
-          tag: 'Broad Anchor',
+          tag: '🔥 #1 Trending Anchor',
+          volumeTier: 'huge',
+          searchScore: 98 - idx * 5,
           isBreakout: true,
         });
       }
     });
 
-    // Then add the hot live autocomplete phrases
-    gathered.forEach((item) => {
+    // Add live breakout autocomplete phrases
+    gathered.forEach((item, catIdx) => {
       item.hotPhrases.forEach((phrase, idx) => {
-        if (!seen.has(phrase)) {
-          seen.add(phrase);
+        const clean = phrase.trim().toLowerCase();
+        if (!seen.has(clean) && clean.length > 3) {
+          seen.add(clean);
+
+          let volumeTier: NicheHotKeyword['volumeTier'] = 'normal';
+          let searchScore = Math.max(30, 85 - catIdx * 8 - idx * 10);
+          let tag = 'Trending';
+
+          if (idx === 0) {
+            volumeTier = 'large';
+            searchScore = 90 - catIdx * 4;
+            tag = '⚡ Breakout';
+          } else if (idx === 1) {
+            volumeTier = 'medium';
+            searchScore = 78 - catIdx * 4;
+            tag = '🔥 Hot Now';
+          }
+
           finalKeywords.push({
             keyword: phrase,
             root: item.root,
-            tag: idx === 0 ? '🔥 Hot Now' : idx === 1 ? '⚡ Rising' : 'Trending',
+            tag,
+            volumeTier,
+            searchScore,
             isBreakout: idx < 2,
           });
         }
       });
     });
 
+    // Sort by search score descending
+    finalKeywords.sort((a, b) => b.searchScore - a.searchScore);
+
     return NextResponse.json({
       niche: detectedNicheLabel,
+      selectedNicheKey: selectedNiche,
+      availableNiches: Object.entries(GOOGLE_TRENDS_NICHES).map(([key, val]) => ({
+        key,
+        label: val.label,
+      })),
       channelTitle: session?.channel?.title || null,
-      keywords: finalKeywords.slice(0, 16),
+      keywords: finalKeywords.slice(0, 20),
     });
   } catch (error: any) {
     console.error('Hot niche keywords error:', error);
